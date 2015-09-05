@@ -4,12 +4,23 @@ collision = require('enum/collision')
 p2 = require('p2')
 material = require('enum/material')
 
+POSES =
+  IDLE: 'idle'
+  WALK: 'walk'
+  SNEAK: 'sneak'
+  JUMP: 'jump'
+  COLLECT: 'collect'
+  PLAYDEAD: 'playdead'
+
 class Character extends Entity
   constructor: (options) ->
     super()
     { @x
       @y } = options
-    @wait = 0
+    @powered = true
+    @pose = POSES.IDLE
+    @anim = 0
+    @moveSpeed = 0
 
     @head = @addCircle(
       radius: 18
@@ -19,7 +30,7 @@ class Character extends Entity
     @torso = @addCircle(
       radius: 20
       position: [@x, @y]
-      mass: 1
+      mass: 1.5
     )
     @foot1 = @addCircle(
       radius: 13
@@ -78,9 +89,6 @@ class Character extends Entity
       localPivotB: [0, -5]
     )
     @addConstraint(@elbowJoint2)
-
-    @footAnim = 0
-    # @setVisualization(Vis)
     return
 
   addBox: (options) ->
@@ -94,37 +102,79 @@ class Character extends Entity
     super(options)
 
   update: (dT) ->
-    pads = navigator.getGamepads()
-    if pads
-      @footAnim += dT * pads[0].axes[0] * 15
-      if pads[0].buttons[1].value == 1 and @wait < 0
-        @torso.applyImpulseLocal(p2.vec2.fromValues(pads[0].axes[0] * 1500,-4500),p2.vec2.fromValues(0,0))
-        @torso.velocity[1] = -5000
-        @wait = 0.5
-      @wait -= dT
-    anim = @footAnim
+    # pads = null#navigator.getGamepads()
+    # if pads
+    #   @footAnim += dT * pads[1].axes[0] * 15
+    #   if pads[1].buttons[1].value == 1 and @wait < 0
+    #     @torso.applyImpulseLocal(p2.vec2.fromValues(pads[1].axes[0] * 1500,-4500),p2.vec2.fromValues(0,0))
+    #     @torso.velocity[1] = -5000
+    #     @wait = 0.5
+    #   @wait -= dT
+    if @pose == POSES.WALK or @pose == POSES.SNEAK
+      @anim += dT * @moveSpeed * 15
+    else
+      @anim += dT * 4
+    anim = @anim
 
-    desiredX = @x
-    desiredY = 640
+    if @powered
+      kt = 100
+      cy = Math.sin(@torso.angle)
+      cl = 50
+      kt = 3000 * Math.abs(cy) * 30
+      @torso.applyForceLocal(p2.vec2.fromValues(-cy * kt, 0), p2.vec2.fromValues(0, -cl))
 
-    kt = 100
-    cy = Math.sin(@torso.angle)
-    cl = 50
-    kt = 3000 * Math.abs(cy) * 30
-    @torso.applyForceLocal(p2.vec2.fromValues(-cy * kt, 0), p2.vec2.fromValues(0, -cl))
+      if @pose == POSES.IDLE
+        k1 = 0.3
+        @kneeJoint1.pivotB[1] = 5 + Math.cos(anim + 0.15) * 5
+        @kneeJoint1.setLimits(k1, k1)
+        k2 = -0.3
+        @kneeJoint2.pivotB[1] = 5 + Math.cos(anim) * 5
+        @kneeJoint2.setLimits(k2, k2)
+        e1 = Math.cos(anim) * 0.2 - 0.6
+        @elbowJoint1.setLimits(e1, e1)
+        e2 = Math.cos(anim + Math.PI) * 0.2 + 0.6
+        @elbowJoint2.setLimits(e2, e2)
+      else if @pose == POSES.WALK
+        k1 = Math.cos(anim + 1.5) * 0.4
+        @kneeJoint1.pivotB[1] = Math.cos(anim) * 10 + 5
+        @kneeJoint1.setLimits(k1, k1)
+        k2 = Math.cos(anim + 1.5 + Math.PI) * 0.4
+        @kneeJoint2.pivotB[1] = Math.cos(anim + Math.PI) * 10 + 5
+        @kneeJoint2.setLimits(k2, k2)
+        e1 = Math.cos(anim + 1.4 + Math.PI / 3) * 1.3
+        @elbowJoint1.setLimits(e1, e1)
+        e2 = Math.cos(anim - 1.8 + Math.PI / 3) * 1.3
+        @elbowJoint2.setLimits(e2, e2)
+      else if @pose == POSES.SNEAK
+        k1 = Math.cos(anim + 1.5) * 0.3
+        @kneeJoint1.pivotB[1] = Math.cos(anim) * 10 + 5
+        @kneeJoint1.setLimits(k1, k1)
+        k2 = Math.cos(anim + 1.5 + Math.PI) * 0.3
+        @kneeJoint2.pivotB[1] = Math.cos(anim + Math.PI) * 10 + 5
+        @kneeJoint2.setLimits(k2, k2)
+        e1 = Math.cos(anim + 1.4 + Math.PI / 3) * 0.1 + (if @moveSpeed > 0 then 1.4 else -1.4)
+        @elbowJoint1.setLimits(e1, e1)
+        e2 = Math.cos(anim - 1.8 + Math.PI / 3) * 0.1 + (if @moveSpeed > 0 then 1.6 else -1.6)
+        @elbowJoint2.setLimits(e2, e2)
+    else
+      @kneeJoint1.setLimits(-Math.PI / 2, Math.PI / 2)
+      @kneeJoint2.setLimits(-Math.PI / 2, Math.PI / 2)
+      @elbowJoint1.setLimits(-Math.PI, Math.PI)
+      @elbowJoint2.setLimits(-Math.PI, Math.PI)
 
-    k1 = Math.cos(anim + 1.5) * 0.4
-    @kneeJoint1.pivotB[1] = Math.cos(anim) * 10 + 5
-    @kneeJoint1.setLimits(k1, k1)
+  idle: ->
+    @pose = POSES.IDLE
+    @moveSpeed = 0
+    return
 
-    k2 = Math.cos(anim + 1.5 + Math.PI) * 0.4
-    @kneeJoint2.pivotB[1] = Math.cos(anim + Math.PI) * 10 + 5
-    @kneeJoint2.setLimits(k2, k2)
+  move: (speed) ->
+    @moveSpeed = speed
+    if Math.abs(@moveSpeed) > 0.4
+      @pose = POSES.WALK
+    else
+      @pose = POSES.SNEAK
 
-    e1 = Math.cos(anim + 1.4 + Math.PI / 3) * 1.3
-    @elbowJoint1.setLimits(e1, e1)
-
-    e2 = Math.cos(anim - 1.8 + Math.PI / 3) * 1.3
-    @elbowJoint2.setLimits(e2, e2)
+  togglePlaydead: ->
+    @powered = !@powered
 
 module.exports = Character

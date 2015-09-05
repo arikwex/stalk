@@ -19,7 +19,9 @@
     "aliases": {
       "pixi": "./app/scripts/engine/pixi.min.js",
       "engine": "./app/scripts/engine",
-      "enum": "./app/scripts/enum"
+      "enum": "./app/scripts/enum",
+      "controllers": "./app/scripts/controllers",
+      "character": "./app/scripts/character"
     }
   }
 }

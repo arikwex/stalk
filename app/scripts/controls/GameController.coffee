@@ -1,4 +1,0 @@
-class GameController
-  constructor: ->
-    return
-

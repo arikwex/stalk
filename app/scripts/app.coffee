@@ -1,6 +1,7 @@
 $ = require('jquery');
 Engine = require('./engine/Engine')
 Character = require('./character/Character')
+KeyboardController = require('controllers/Keyboard')
 
 $(->
   engine = new Engine(1024, 768)
@@ -12,6 +13,14 @@ $(->
     y: 400
   )
   engine.addEntity(character)
+
+  controller = new KeyboardController(character)
+  controller.onDown(['RIGHT', '!LEFT', 'SHIFT'], 'move', 0.35)
+  controller.onDown(['LEFT', '!RIGHT', 'SHIFT'], 'move', -0.35)
+  controller.onDown(['RIGHT', '!LEFT', '!SHIFT'], 'move', 1)
+  controller.onDown(['LEFT', '!RIGHT', '!SHIFT'], 'move', -1)
+  controller.onPress(['w'], 'togglePlaydead')
+  controller.onNone('idle')
 
   window.engine = engine
   window.pixi = require('pixi')
