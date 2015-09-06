@@ -8,7 +8,6 @@ POSES =
   IDLE: 'idle'
   WALK: 'walk'
   SNEAK: 'sneak'
-  JUMP: 'jump'
   COLLECT: 'collect'
   PLAYDEAD: 'playdead'
 
@@ -21,6 +20,7 @@ class Character extends Entity
     @pose = POSES.IDLE
     @anim = 0
     @moveSpeed = 0
+    @jumpAnim = 2
 
     @head = @addCircle(
       radius: 18
@@ -117,40 +117,49 @@ class Character extends Entity
     anim = @anim
 
     if @powered
-      kt = 100
       cy = Math.sin(@torso.angle)
       cl = 50
-      kt = 3000 * Math.abs(cy) * 30
+      kt = Math.abs(cy) * (10000 + 80000 * Math.abs(Math.pow(Math.cos(@torso.angle), 3)))
       @torso.applyForceLocal(p2.vec2.fromValues(-cy * kt, 0), p2.vec2.fromValues(0, -cl))
+
+      legJumpAdj = 0
+      jumpFactor = (if @jumpAnim < 2 then 0 else 1)
+      if @jumpAnim < 2
+        @jumpAnim += dT * (4 + @jumpAnim * 5)
+        legJumpAdj = @jumpAnim * @jumpAnim * 190 - @jumpAnim * 140
+        if legJumpAdj > 50
+          @jumpAnim = 2
+          legJumpAdj = 60
+
 
       if @pose == POSES.IDLE
         k1 = 0.3
-        @kneeJoint1.pivotB[1] = 5 + Math.cos(anim + 0.15) * 5
+        @kneeJoint1.pivotB[1] = 5 + Math.cos(anim + 0.15) * 5 + legJumpAdj
         @kneeJoint1.setLimits(k1, k1)
         k2 = -0.3
-        @kneeJoint2.pivotB[1] = 5 + Math.cos(anim) * 5
+        @kneeJoint2.pivotB[1] = 5 + Math.cos(anim) * 5 + legJumpAdj
         @kneeJoint2.setLimits(k2, k2)
         e1 = Math.cos(anim) * 0.2 - 0.6
         @elbowJoint1.setLimits(e1, e1)
         e2 = Math.cos(anim + Math.PI) * 0.2 + 0.6
         @elbowJoint2.setLimits(e2, e2)
       else if @pose == POSES.WALK
-        k1 = Math.cos(anim + 1.5) * 0.4
-        @kneeJoint1.pivotB[1] = Math.cos(anim) * 10 + 5
+        k1 = Math.cos(anim + 1.5) * 0.4 * jumpFactor
+        @kneeJoint1.pivotB[1] = Math.cos(anim) * 10 + 5 + legJumpAdj
         @kneeJoint1.setLimits(k1, k1)
-        k2 = Math.cos(anim + 1.5 + Math.PI) * 0.4
-        @kneeJoint2.pivotB[1] = Math.cos(anim + Math.PI) * 10 + 5
+        k2 = Math.cos(anim + 1.5 + Math.PI) * 0.4 * jumpFactor
+        @kneeJoint2.pivotB[1] = Math.cos(anim + Math.PI) * 10 + 5 + legJumpAdj
         @kneeJoint2.setLimits(k2, k2)
         e1 = Math.cos(anim + 1.4 + Math.PI / 3) * 1.3
         @elbowJoint1.setLimits(e1, e1)
         e2 = Math.cos(anim - 1.8 + Math.PI / 3) * 1.3
         @elbowJoint2.setLimits(e2, e2)
       else if @pose == POSES.SNEAK
-        k1 = Math.cos(anim + 1.5) * 0.3
-        @kneeJoint1.pivotB[1] = Math.cos(anim) * 10 + 5
+        k1 = Math.cos(anim + 1.5) * 0.3 * jumpFactor
+        @kneeJoint1.pivotB[1] = Math.cos(anim) * 10 + 5 + legJumpAdj
         @kneeJoint1.setLimits(k1, k1)
-        k2 = Math.cos(anim + 1.5 + Math.PI) * 0.3
-        @kneeJoint2.pivotB[1] = Math.cos(anim + Math.PI) * 10 + 5
+        k2 = Math.cos(anim + 1.5 + Math.PI) * 0.3 * jumpFactor
+        @kneeJoint2.pivotB[1] = Math.cos(anim + Math.PI) * 10 + 5 + legJumpAdj
         @kneeJoint2.setLimits(k2, k2)
         e1 = Math.cos(anim + 1.4 + Math.PI / 3) * 0.1 + (if @moveSpeed > 0 then 1.4 else -1.4)
         @elbowJoint1.setLimits(e1, e1)
@@ -176,5 +185,8 @@ class Character extends Entity
 
   togglePlaydead: ->
     @powered = !@powered
+
+  jump: ->
+    @jumpAnim = 0
 
 module.exports = Character

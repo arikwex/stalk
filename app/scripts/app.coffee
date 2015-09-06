@@ -19,7 +19,8 @@ $(->
   controller.onDown(['LEFT', '!RIGHT', 'SHIFT'], 'move', -0.35)
   controller.onDown(['RIGHT', '!LEFT', '!SHIFT'], 'move', 1)
   controller.onDown(['LEFT', '!RIGHT', '!SHIFT'], 'move', -1)
-  controller.onPress(['w'], 'togglePlaydead')
+  controller.onPress(['W'], 'togglePlaydead')
+  controller.onPress(['SPACE'], 'jump')
   controller.onNone('idle')
 
   window.engine = engine

@@ -89,6 +89,7 @@ module.exports = KeyboardController
 
 KEYMAP =
   'shift': 16
+  'space': 32
   'left': 37
   'up': 38
   'right': 39
