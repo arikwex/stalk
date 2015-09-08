@@ -25,7 +25,7 @@ class Engine
     @world.addBody(plane)
 
     fric = new p2.ContactMaterial(material.GROUND, material.SHOE,
-      friction: 5.0
+      friction: 7.0
       restitution: 0.01
     )
     @world.addContactMaterial(fric)
@@ -63,7 +63,7 @@ class Engine
 
   step: (dT) ->
     for id, entity of @entities
-      entity.update(dT)
+      entity.update(dT, @)
       entity.render()
 
   _animate: ->

@@ -20,7 +20,16 @@ class Character extends Entity
     @pose = POSES.IDLE
     @anim = 0
     @moveSpeed = 0
-    @jumpAnim = 2
+    @onGround = false
+    @jumpRequest = false
+    @jumpTimer = 0
+    @footRay = new p2.Ray(
+      collisionGroup: collision.GROUND
+      collisionMask: collision.GROUND
+      mode: p2.Ray.CLOSEST
+    )
+    @footRayResult = new p2.RaycastResult()
+    @balanceAngle = 0
 
     @head = @addCircle(
       radius: 18
@@ -101,7 +110,7 @@ class Character extends Entity
     options.mask = options.mask || collision.GROUND
     super(options)
 
-  update: (dT) ->
+  update: (dT, engine) ->
     # pads = null#navigator.getGamepads()
     # if pads
     #   @footAnim += dT * pads[1].axes[0] * 15
@@ -117,49 +126,78 @@ class Character extends Entity
     anim = @anim
 
     if @powered
-      cy = Math.sin(@torso.angle)
+      @footRay.from = [@torso.position[0] - 10, @torso.position[1] + 20]
+      @footRay.to = [@torso.position[0] - 10, @torso.position[1] + 140]
+      @footRay.update()
+      @footRayResult.reset()
+      @footRay.intersectBodies(@footRayResult, engine.world.bodies)
+      leftDist = @footRayResult.fraction * @footRay.length
+      @footRay.from = [@torso.position[0] + 10, @torso.position[1] + 20]
+      @footRay.to = [@torso.position[0] + 10, @torso.position[1] + 140]
+      @footRay.update()
+      @footRayResult.reset()
+      @footRay.intersectBodies(@footRayResult, engine.world.bodies)
+      rightDist = @footRayResult.fraction * @footRay.length
+      if leftDist <= -120
+        leftDist = 120
+      if rightDist <= -120
+        rightDist = 120
+      dGround = rightDist - leftDist
+      legBalanceAngle = -Math.atan2(dGround, 20) * 0.7
+      @balanceAngle += (legBalanceAngle - @balanceAngle) * 2.5 * dT
+      legBalanceAngle = @balanceAngle
+
+      if (rightDist < 70) or (leftDist < 70)
+        @onGround = true
+      else
+        @onGround = false
+
+      # TODO: Use single impulse to get back up
+      cy = Math.sin(@torso.angle - legBalanceAngle * 0.7)
       cl = 50
-      kt = Math.abs(cy) * (10000 + 80000 * Math.abs(Math.pow(Math.cos(@torso.angle), 3)))
+      kt = Math.abs(cy) * (10000 + 80000 * Math.abs(Math.pow(Math.cos(@torso.angle), 3)) * Math.cos(legBalanceAngle))
+      kt *= (1 - Math.abs(legBalanceAngle))
+      if !@onGround
+        kt *= 0.2
       @torso.applyForceLocal(p2.vec2.fromValues(-cy * kt, 0), p2.vec2.fromValues(0, -cl))
 
-      legJumpAdj = 0
-      jumpFactor = (if @jumpAnim < 2 then 0 else 1)
-      if @jumpAnim < 2
-        @jumpAnim += dT * (4 + @jumpAnim * 5)
-        legJumpAdj = @jumpAnim * @jumpAnim * 190 - @jumpAnim * 140
-        if legJumpAdj > 50
-          @jumpAnim = 2
-          legJumpAdj = 60
-
+      if @onGround and (@jumpTimer < 0) and @jumpRequest
+        @torso.applyImpulseLocal(p2.vec2.fromValues(@moveSpeed * 500, 0),p2.vec2.fromValues(0,0))
+        @torso.velocity[1] = -2500
+        @onGround = false
+        @jumpTimer = 0.25
+      else
+        @jumpTimer -= dT
+      @jumpRequest = false
 
       if @pose == POSES.IDLE
-        k1 = 0.3
-        @kneeJoint1.pivotB[1] = 5 + Math.cos(anim + 0.15) * 5 + legJumpAdj
+        k1 = 0.3 + legBalanceAngle
+        @kneeJoint1.pivotB[1] = 5 + Math.cos(anim + 0.15) * 5
         @kneeJoint1.setLimits(k1, k1)
-        k2 = -0.3
-        @kneeJoint2.pivotB[1] = 5 + Math.cos(anim) * 5 + legJumpAdj
+        k2 = -0.3 + legBalanceAngle
+        @kneeJoint2.pivotB[1] = 5 + Math.cos(anim) * 5
         @kneeJoint2.setLimits(k2, k2)
         e1 = Math.cos(anim) * 0.2 - 0.6
         @elbowJoint1.setLimits(e1, e1)
         e2 = Math.cos(anim + Math.PI) * 0.2 + 0.6
         @elbowJoint2.setLimits(e2, e2)
       else if @pose == POSES.WALK
-        k1 = Math.cos(anim + 1.5) * 0.4 * jumpFactor
-        @kneeJoint1.pivotB[1] = Math.cos(anim) * 10 + 5 + legJumpAdj
+        k1 = Math.cos(anim + 1.5) * 0.4 + legBalanceAngle
+        @kneeJoint1.pivotB[1] = Math.cos(anim) * 10 + 5
         @kneeJoint1.setLimits(k1, k1)
-        k2 = Math.cos(anim + 1.5 + Math.PI) * 0.4 * jumpFactor
-        @kneeJoint2.pivotB[1] = Math.cos(anim + Math.PI) * 10 + 5 + legJumpAdj
+        k2 = Math.cos(anim + 1.5 + Math.PI) * 0.4 + legBalanceAngle
+        @kneeJoint2.pivotB[1] = Math.cos(anim + Math.PI) * 10 + 5
         @kneeJoint2.setLimits(k2, k2)
         e1 = Math.cos(anim + 1.4 + Math.PI / 3) * 1.3
         @elbowJoint1.setLimits(e1, e1)
         e2 = Math.cos(anim - 1.8 + Math.PI / 3) * 1.3
         @elbowJoint2.setLimits(e2, e2)
       else if @pose == POSES.SNEAK
-        k1 = Math.cos(anim + 1.5) * 0.3 * jumpFactor
-        @kneeJoint1.pivotB[1] = Math.cos(anim) * 10 + 5 + legJumpAdj
+        k1 = Math.cos(anim + 1.5) * 0.3 + legBalanceAngle
+        @kneeJoint1.pivotB[1] = Math.cos(anim) * 10 + 5
         @kneeJoint1.setLimits(k1, k1)
-        k2 = Math.cos(anim + 1.5 + Math.PI) * 0.3 * jumpFactor
-        @kneeJoint2.pivotB[1] = Math.cos(anim + Math.PI) * 10 + 5 + legJumpAdj
+        k2 = Math.cos(anim + 1.5 + Math.PI) * 0.3 + legBalanceAngle
+        @kneeJoint2.pivotB[1] = Math.cos(anim + Math.PI) * 10 + 5
         @kneeJoint2.setLimits(k2, k2)
         e1 = Math.cos(anim + 1.4 + Math.PI / 3) * 0.1 + (if @moveSpeed > 0 then 1.4 else -1.4)
         @elbowJoint1.setLimits(e1, e1)
@@ -187,6 +225,6 @@ class Character extends Entity
     @powered = !@powered
 
   jump: ->
-    @jumpAnim = 0
+    @jumpRequest = true
 
 module.exports = Character

@@ -1,6 +1,6 @@
 $ = require('jquery');
 Engine = require('./engine/Engine')
-Character = require('./character/Character')
+GameMap = require('maps/GameMap')
 KeyboardController = require('controllers/Keyboard')
 
 $(->
@@ -8,13 +8,10 @@ $(->
   engine.attach(document.body)
   engine.start()
 
-  character = new Character(
-    x: 100
-    y: 400
-  )
-  engine.addEntity(character)
+  currentMap = new GameMap(engine)
+  currentMap.load(require('maps/levels/sandbox'))
 
-  controller = new KeyboardController(character)
+  controller = new KeyboardController(currentMap.getPlayer())
   controller.onDown(['RIGHT', '!LEFT', 'SHIFT'], 'move', 0.35)
   controller.onDown(['LEFT', '!RIGHT', 'SHIFT'], 'move', -0.35)
   controller.onDown(['RIGHT', '!LEFT', '!SHIFT'], 'move', 1)
@@ -26,5 +23,5 @@ $(->
   window.engine = engine
   window.pixi = require('pixi')
   window.p2 = require('p2')
-  window.character = character
+  window.character = currentMap.getPlayer()
 )

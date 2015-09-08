@@ -21,7 +21,8 @@
       "engine": "./app/scripts/engine",
       "enum": "./app/scripts/enum",
       "controllers": "./app/scripts/controllers",
-      "character": "./app/scripts/character"
+      "character": "./app/scripts/character",
+      "maps": "./app/scripts/maps"
     }
   }
 }

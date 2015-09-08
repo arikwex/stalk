@@ -23,6 +23,9 @@ class Entity
     body = new p2.Body(
       mass: options.mass
       position: [options.position[0], options.position[1]]
+      fixedX: options.fixedX || false
+      fixedY: options.fixedY || false
+      fixedRotation: options.fixedRotation || false
     )
     shape.material = options.material
     body.addShape(shape)
@@ -50,7 +53,7 @@ class Entity
     @constraints.push(constraint)
     return
 
-  update: (dT) ->
+  update: (dT, engine) ->
     return
 
   render: ->
