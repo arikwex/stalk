@@ -22,7 +22,8 @@
       "enum": "./app/scripts/enum",
       "controllers": "./app/scripts/controllers",
       "character": "./app/scripts/character",
-      "maps": "./app/scripts/maps"
+      "maps": "./app/scripts/maps",
+      "plants": "./app/scripts/plants"
     }
   }
 }

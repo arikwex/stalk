@@ -16,13 +16,14 @@ class Terrain extends Entity
       width: info.width
       height: info.height
       group: collision.GROUND
-      mask: collision.GROUND | collision.CHARACTER
+      mask: collision.GROUND | collision.CHARACTER | collision.PLANT
       mass: info.width * info.height * 0.01
       material: material.GROUND
       fixedX: (if info.fixedX? then info.fixedX else true)
       fixedY: (if info.fixedX? then info.fixedX else true)
       fixedRotation: (if info.fixedRotation? then info.fixedRotation else true)
     @body = @addBox(rectInfo)
+    @body.isTerrain = true
     return
 
 module.exports = Terrain

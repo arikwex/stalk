@@ -13,17 +13,6 @@ class Engine
     @world.solver.tolerance = 0.002;
     @entities = {}
 
-    planeShape = new p2.Plane()
-    plane = new p2.Body(
-      position:[0, 700]
-      angle: Math.PI
-    )
-    planeShape.material = material.GROUND
-    plane.addShape(planeShape)
-    planeShape.collisionGroup = 0x01
-    planeShape.collisionMask =  0x01 | 0x02
-    @world.addBody(plane)
-
     fric = new p2.ContactMaterial(material.GROUND, material.SHOE,
       friction: 7.0
       restitution: 0.01

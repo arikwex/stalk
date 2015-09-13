@@ -6,6 +6,12 @@ module.exports =
     direction: false
   terrain: [
     (grass:
+      x: 500
+      y: 750
+      width: 1000
+      height: 100
+      angle: 0)
+    (grass:
       x: 400
       y: 300
       width: 300

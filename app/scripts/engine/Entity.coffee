@@ -1,4 +1,3 @@
-Renderer = require('./Renderer')
 PIXI = require('pixi')
 p2 = require('p2')
 Vis = require('./visualization')

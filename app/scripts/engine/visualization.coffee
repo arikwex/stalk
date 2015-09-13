@@ -4,15 +4,16 @@ module.exports =
       gfx = body.graphics
       gfx.clear()
       gfx.lineStyle(1, 0xffffff, 1)
-      if body.shapes[0].width
-        w = body.shapes[0].width
-        h = body.shapes[0].height
+      shape = body.shapes[0]
+      if shape.width
+        w = shape.width
+        h = shape.height
         gfx.moveTo(-w / 2.0, -h / 2.0)
         gfx.lineTo(w / 2.0, -h / 2.0)
         gfx.lineTo(w / 2.0, h / 2.0)
         gfx.lineTo(-w / 2.0, h / 2.0)
-      else
-        r = body.shapes[0].radius
+      else if shape.radius
+        r = shape.radius
         gfx.drawCircle(0, 0, r)
         gfx.moveTo(0, 0)
         gfx.lineTo(r, 0)

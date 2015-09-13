@@ -111,14 +111,6 @@ class Character extends Entity
     super(options)
 
   update: (dT, engine) ->
-    # pads = null#navigator.getGamepads()
-    # if pads
-    #   @footAnim += dT * pads[1].axes[0] * 15
-    #   if pads[1].buttons[1].value == 1 and @wait < 0
-    #     @torso.applyImpulseLocal(p2.vec2.fromValues(pads[1].axes[0] * 1500,-4500),p2.vec2.fromValues(0,0))
-    #     @torso.velocity[1] = -5000
-    #     @wait = 0.5
-    #   @wait -= dT
     if @pose == POSES.WALK or @pose == POSES.SNEAK
       @anim += dT * @moveSpeed * 15
     else
@@ -153,12 +145,14 @@ class Character extends Entity
         @onGround = false
 
       # TODO: Use single impulse to get back up
-      cy = Math.sin(@torso.angle - legBalanceAngle * 0.7)
+      dAngle = @torso.angle - legBalanceAngle * 0.7
+      cy = Math.sin(dAngle)
       cl = 50
       kt = Math.abs(cy) * (10000 + 80000 * Math.abs(Math.pow(Math.cos(@torso.angle), 3)) * Math.cos(legBalanceAngle))
       kt *= (1 - Math.abs(legBalanceAngle))
+      @lastDelta = dAngle
       if !@onGround
-        kt *= 0.2
+        kt *= 0.1
       @torso.applyForceLocal(p2.vec2.fromValues(-cy * kt, 0), p2.vec2.fromValues(0, -cl))
 
       if @onGround and (@jumpTimer < 0) and @jumpRequest
