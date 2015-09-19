@@ -28,6 +28,32 @@ $(->
   controller.onPress(['SPACE'], 'jump')
   controller.onNone('idle')
 
+  collision = require('enum/collision')
+  material = require('enum/material')
+  Entity = require('engine/Entity')
+  for x in [0..8]
+    pombi = new Entity()
+    fruit = pombi.addCircle(
+      radius: 26
+      position: [300 - x * 15, 500 - x * 5]
+      mass: 2
+      material: material.BODY
+      group: collision.BODY
+      mask: collision.GROUND | collision.BODY | collision.CHARACTER
+    )
+    PIXI = require('pixi')
+    midTexture = PIXI.Texture.fromImage("images/pombi.png");
+    mid = new PIXI.Sprite(midTexture);
+    mid.position.x = -34;
+    mid.position.y = -36;
+    fruit.angle = Math.random()*7
+    mid.scale =
+      x: 0.2
+      y: 0.2
+    fruit.graphics.addChild(mid);
+    fruit.angularDamping = 0.99
+    engine.addEntity(pombi)
+
   window.engine = engine
   window.pixi = require('pixi')
   window.p2 = require('p2')

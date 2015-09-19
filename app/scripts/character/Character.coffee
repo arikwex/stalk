@@ -102,12 +102,12 @@ class Character extends Entity
 
   addBox: (options) ->
     options.group = options.group || collision.CHARACTER
-    options.mask = options.mask || collision.GROUND
+    options.mask = options.mask || (collision.GROUND | collision.BODY)
     super(options)
 
   addCircle: (options) ->
     options.group = options.group || collision.CHARACTER
-    options.mask = options.mask || collision.GROUND
+    options.mask = options.mask || (collision.GROUND | collision.BODY)
     super(options)
 
   update: (dT, engine) ->

@@ -16,7 +16,7 @@ class Terrain extends Entity
       width: info.width
       height: info.height
       group: collision.GROUND
-      mask: collision.GROUND | collision.CHARACTER | collision.PLANT
+      mask: collision.GROUND | collision.CHARACTER | collision.PLANT | collision.BODY
       mass: info.width * info.height * 0.01
       material: material.GROUND
       fixedX: (if info.fixedX? then info.fixedX else true)
